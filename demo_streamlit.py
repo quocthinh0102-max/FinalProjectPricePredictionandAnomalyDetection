@@ -469,6 +469,18 @@ df["Năm đăng ký"] = pd.to_numeric(df["Năm đăng ký"], errors="coerce").fi
 
         st.markdown("---")
 
+        # --- MỤC MỚI: WORDCLOUD ---
+        st.subheader("3. ☁️ Word Cloud - Phân tích Dữ liệu Text")
+        st.markdown("""
+        Word Cloud được tạo từ trường `Tiêu đề` hoặc `Mô tả` của xe để xác định các từ khóa phổ biến và hiểu rõ hơn về cách người dùng mô tả sản phẩm.
+        """)
+        
+        WORDCLOUD_PATH = "WORDCLOUD.png" # Đổi tên này nếu bạn dùng tên file khác
+        if os.path.exists(WORDCLOUD_PATH):
+             st.image(WORDCLOUD_PATH, caption="Word Cloud Phân tích Text", use_container_width=True)
+        else:
+             st.markdown("""<div style="background-color:#161b22; height: 300px; border-radius: 10px; border: 2px dashed #00bcd4; display: flex; align-items: center; justify-content: center;"><h5 style="color: #c9d1d9;">[PLACEHOLDER: Vui lòng tải lên file wordcloud_eda.png]</h5></div>""", unsafe_allow_html=True)
+        # --- KẾT THÚC MỤC MỚI ---
 
     # --- 4. SKlearn (Traditional ML) ---
     with tabs[3]:
