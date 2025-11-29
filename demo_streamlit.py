@@ -141,7 +141,7 @@ def preprocess_df_before_predict(df_raw: pd.DataFrame):
         )
 
         df["Giá"] = pd.to_numeric(df["Giá"], errors="coerce")
-
+    
     # ---- XỬ LÝ NĂM ĐĂNG KÝ ----
     if "Năm đăng ký" in df.columns:
         df["Năm đăng ký"] = df["Năm đăng ký"].astype(str).str.strip()
@@ -355,6 +355,14 @@ if choice == "Tổng quan":
         * **Kích thước ban đầu**: 7208 rows và 18 columns.
         * **Các cột chính**: `Giá` (Target), `Thương hiệu`, `Dòng xe`, `Năm đăng ký`, `Số Km đã đi`, `Tình trạng`, `Loại xe`, `Dung tích xe`, `Xuất xứ`.
         * **Định dạng thô**: Các cột `Giá`, `Năm đăng ký`, `Số Km đã đi` cần được xử lý/chuẩn hóa vì chứa chuỗi ký tự không phải số (`trước năm 1980`, đơn vị tiền tệ, v.v.).
+        * **Thống kê mô tả**:
+        - mean: 49,241,942 
+        - std: 1,603,077,312 
+        - min: 0 
+        - 25%: 8,500,000 
+        - 50%: 16,500,000 
+        - 75%: 32,500,000 
+        - max: 136,000,000,000
         """)
         st.subheader("🧹 Data Cleaning")
         st.code("""
@@ -379,108 +387,43 @@ df["Năm đăng ký"] = pd.to_numeric(df["Năm đăng ký"], errors="coerce").fi
         Phân tích EDA nhằm hiểu rõ phân bố dữ liệu, tìm kiếm mối quan hệ giữa các biến, và phát hiện outliers.
         """)
         
-        # Tạo Biểu đồ 1: Phân bố Giá (Log Transformed)
-        st.subheader("1. 📈 Phân bố biến mục tiêu (Giá)")
-        if df is not None and 'Giá' in df.columns:
-            # Tạo DataFrame sạch để vẽ biểu đồ (chỉ cho mục đích trực quan)
-            df_eda = df.copy()
-            df_eda = preprocess_df_before_predict(df_eda)
-            
-            # Loại bỏ NaNs và lọc giá trị hợp lý (tránh lỗi Log)
-            df_eda = df_eda.dropna(subset=['Giá'])
-            df_eda = df_eda[df_eda['Giá'] > 0]
-            
-            if not df_eda.empty:
-                # Log Transform (để hình ảnh trực quan tốt hơn)
-                df_eda['Log Giá'] = np.log1p(df_eda['Giá'])
-                
-                fig, ax = plt.subplots(1, 2, figsize=(12, 4))
-                
-                # Plot 1: Original Distribution (Price)
-                sns.histplot(df_eda['Giá'], ax=ax[0], bins=50, kde=True, color='#00e5ff')
-                ax[0].set_title('Phân bố Giá gốc (Lệch phải)', color='white')
-                ax[0].tick_params(colors='white')
-                ax[0].set_xlabel('Giá (VND)', color='white')
-                ax[0].set_ylabel('Tần suất', color='white')
-
-                # Plot 2: Log-Transformed Distribution
-                sns.histplot(df_eda['Log Giá'], ax=ax[1], bins=50, kde=True, color='#00bcd4')
-                ax[1].set_title('Phân bố Log Giá (Gần chuẩn)', color='white')
-                ax[1].tick_params(colors='white')
-                ax[1].set_xlabel('Log(Giá)', color='white')
-                ax[1].set_ylabel('Tần suất', color='white')
-                
-                # Theme adjustments for dark mode
-                fig.patch.set_facecolor('#0d1117')
-                ax[0].set_facecolor('#161b22')
-                ax[1].set_facecolor('#161b22')
-                ax[0].spines['top'].set_color('white')
-                ax[0].spines['bottom'].set_color('white')
-                ax[0].spines['left'].set_color('white')
-                ax[0].spines['right'].set_color('white')
-                ax[1].spines['top'].set_color('white')
-                ax[1].spines['bottom'].set_color('white')
-                ax[1].spines['left'].set_color('white')
-                ax[1].spines['right'].set_color('white')
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-                st.info("Biểu đồ cho thấy cột Giá gốc bị lệch phải nghiêm trọng, việc Log-Transformation giúp phân bố gần Normal hơn, rất quan trọng cho các mô hình hồi quy tuyến tính.")
-            else:
-                st.warning("Không đủ dữ liệu hợp lệ (Giá > 0) để vẽ biểu đồ.")
+        # --- 1. Phân bố Biến Số ---
+        st.subheader("1. 📈 Phân bố biến số quan trọng (Giá và Số Km đã đi)")
+        DISTRIBUTION_PATH = "distribution.png"
+        if os.path.exists(DISTRIBUTION_PATH):
+             st.image(DISTRIBUTION_PATH, caption="Phân bố Log(Giá) và Log(Số Km đã đi)", use_container_width=True)
+             st.info("""
+             **Insight:** Cả hai biến `Giá` và `Số Km đã đi` đều được **Log-Transformation** để giảm độ lệch phải (Right-Skewness), giúp phân bố gần chuẩn (Normal) hơn, cải thiện hiệu suất cho các mô hình hồi quy (Regression Models).
+             """)
         else:
-            st.warning("Dataframe không được tải hoặc thiếu cột 'Giá'.")
-
+            st.markdown("""<div style="background-color:#161b22; height: 300px; border-radius: 10px; border: 2px dashed #00bcd4; display: flex; align-items: center; justify-content: center;"><h5 style="color: #c9d1d9;">[PLACEHOLDER: Vui lòng tải lên file distribution.png]</h5></div>""", unsafe_allow_html=True)
         
-        # Tạo Biểu đồ 2: Ma trận Tương quan (Correlation Heatmap)
-        st.subheader("2. 🔗 Ma trận Tương quan giữa các biến Số")
-        numerical_cols = ['Giá', 'Năm đăng ký', 'Số Km đã đi']
-        if df is not None and all(col in df.columns for col in numerical_cols):
-            df_corr = df.copy()
-            df_corr = preprocess_df_before_predict(df_corr)
-            df_corr = df_corr.select_dtypes(include=np.number).dropna()
-            
-            if not df_corr.empty and len(df_corr.columns) >= 2:
-                corr_matrix = df_corr.corr()
-                
-                fig_corr, ax_corr = plt.subplots(figsize=(8, 6))
-                sns.heatmap(
-                    corr_matrix, 
-                    annot=True, 
-                    cmap='coolwarm', 
-                    fmt=".2f", 
-                    linewidths=.5, 
-                    linecolor='#0d1117',
-                    cbar_kws={'label': 'Hệ số tương quan'},
-                    ax=ax_corr
-                )
-                ax_corr.set_title('Ma trận Tương quan', color='white')
-                fig_corr.patch.set_facecolor('#0d1117')
-                ax_corr.set_facecolor('#161b22')
-                ax_corr.tick_params(colors='white')
-                
-                plt.tight_layout()
-                st.pyplot(fig_corr)
-                st.info("Ma trận tương quan cho thấy 'Giá' có mối tương quan âm mạnh với 'Năm đăng ký' (xe càng cũ, giá càng giảm) và 'Số Km đã đi' (chạy càng nhiều, giá càng giảm).")
-            else:
-                st.warning("Không đủ biến số hợp lệ để tính toán ma trận tương quan.")
+        # --- 2. Heatmap Tương quan ---
+        st.subheader("2. 🔗 Ma trận Tương quan")
+        HEATMAP_PATH = "heatmap.png"
+        if os.path.exists(HEATMAP_PATH):
+             st.image(HEATMAP_PATH, caption="Correlation Heatmap giữa các biến số", use_container_width=True)
+             st.info("""
+             **Insight:**
+             * **Giá vs Năm đăng ký:** Tương quan **Âm Mạnh** (khoảng -0.65). Điều này khẳng định xe càng cũ (Năm đăng ký càng thấp), giá trị càng giảm.
+             * **Giá vs Số Km đã đi:** Tương quan **Âm Trung bình** (khoảng -0.38). Số Km đã đi càng cao, giá trị càng giảm.
+             * **Năm đăng ký vs Số Km đã đi:** Tương quan **Dương** (khoảng 0.49). Điều này cho thấy xe mới hơn có xu hướng có số km đã đi thấp hơn, là một mối quan hệ hợp lý trong thị trường xe cũ.
+             """)
         else:
-            st.warning("Dataframe không được tải hoặc thiếu các cột số cần thiết.")
-
-        st.markdown("---")
-
-        # --- MỤC MỚI: WORDCLOUD ---
+            st.markdown("""<div style="background-color:#161b22; height: 300px; border-radius: 10px; border: 2px dashed #00bcd4; display: flex; align-items: center; justify-content: center;"><h5 style="color: #c9d1d9;'>[PLACEHOLDER: Vui lòng tải lên file heatmap.png]</h5></div>""", unsafe_allow_html=True)
+        
+        # --- 3. Word Cloud ---
         st.subheader("3. ☁️ Word Cloud - Phân tích Dữ liệu Text")
         st.markdown("""
         Word Cloud được tạo từ trường `Tiêu đề` hoặc `Mô tả` của xe để xác định các từ khóa phổ biến và hiểu rõ hơn về cách người dùng mô tả sản phẩm.
         """)
         
-        WORDCLOUD_PATH = "WORDCLOUD.png" # Đổi tên này nếu bạn dùng tên file khác
+        WORDCLOUD_PATH = "WORDCLOUD.png" 
         if os.path.exists(WORDCLOUD_PATH):
              st.image(WORDCLOUD_PATH, caption="Word Cloud Phân tích Text", use_container_width=True)
         else:
-             st.markdown("""<div style="background-color:#161b22; height: 300px; border-radius: 10px; border: 2px dashed #00bcd4; display: flex; align-items: center; justify-content: center;"><h5 style="color: #c9d1d9;">[PLACEHOLDER: Vui lòng tải lên file wordcloud_eda.png]</h5></div>""", unsafe_allow_html=True)
-        # --- KẾT THÚC MỤC MỚI ---
+             st.markdown("""<div style="background-color:#161b22; height: 300px; border-radius: 10px; border: 2px dashed #00bcd4; display: flex; align-items: center; justify-content: center;"><h5 style="color: #c9d1d9;'>[PLACEHOLDER: Vui lòng tải lên file wordcloud_eda.png]</h5></div>""", unsafe_allow_html=True)
+        # --- KẾT THÚC MỤC WORDCLOUD ---
 
     # --- 4. SKlearn (Traditional ML) ---
     with tabs[3]:
