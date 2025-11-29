@@ -535,7 +535,6 @@ df["Năm đăng ký"] = pd.to_numeric(df["Năm đăng ký"], errors="coerce").fi
             * **Công việc chính**:
                 * Xây dựng và so sánh các Mô hình dự đoán **Regression** (SKlearn & PySpark).
                 * Xây dựng Mô hình **Phát hiện Bất thường** (Anomaly Detection).
-                * **Tối ưu hóa Hyperparameters** (GridSearch/RandomSearch).
                 * **Đóng gói Model** (Joblib) và tích hợp vào Streamlit App.
             """)
             
@@ -546,10 +545,9 @@ df["Năm đăng ký"] = pd.to_numeric(df["Năm đăng ký"], errors="coerce").fi
             st.markdown("""
             * **Chuyên môn**: **Data Analysis** & **GUI/UX**.
             * **Công việc chính**:
-                * **Thu thập dữ liệu** (Web Scraping).
                 * Thực hiện **EDA (Exploratory Data Analysis)** và Data Cleaning ban đầu.
                 * **Thiết kế giao diện người dùng (GUI)** bằng Streamlit.
-                * Đảm bảo tính **User Experience (UX)** và thẩm mỹ (Dark/Futuristic Theme).
+                * Đảm bảo tính **User Experience (UX)** và thẩm mỹ.
             """)
             
         st.markdown("---")
